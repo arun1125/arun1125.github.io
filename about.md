@@ -1,4 +1,4 @@
-# About Me
+# About
 
 Hi! My name is Arun, I currently work as a Data Scientist in Canada. I graduated with a degree in Mathematics from the University of Warwick. Actually, it's more like, I dropped out of my masters to work in Canada after winning an award in my internship between 3rd and 4th year. 
 
