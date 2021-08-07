@@ -1,7 +1,19 @@
-Hello and welcome to this *blog*. Edit the `index.md` file to change this content. All pages on the blog, including this one, use [Markdown](https://guides.github.com/features/mastering-markdown/). You can include images:
+HelloHello, I see you've found my little node on this massive fuck off graph we call the internet. This space is mostly used to write about things I am interested in and a place to keep my notes. 
 
-![Image of fast.ai logo](images/logo.png)
+### A little about me
+Hi! My name is Arun, I currently work as a Data Scientist in Canada. I graduated with a degree in Mathematics from the University of Warwick. Actually, it's more like, I dropped out of my masters to work in Canada after winning an award in my internship between 3rd and 4th year. 
 
-## This is a title
+Likes:
+* Cracking a cold one open with the boys
+* Data Science
+* Reading
+* Working out
+* Psychedelics
 
-And you can include links, like this [link to fast.ai](https://www.fast.ai). Posts will appear after this file. 
+Dislikes:
+* The word soggy
+* Messy Kitchens 
+
+Hopefully You get to find out a little about me through this blog or even better learn something new about a topic we share an interest in.
+
+## Posts 
