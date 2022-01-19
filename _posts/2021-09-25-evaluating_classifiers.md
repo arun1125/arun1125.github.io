@@ -321,7 +321,7 @@ plot_roc_curve(model, X_test, y_test)
 
 
 
-![png](evaluating_classifiers_files/output_30_2.png)
+![png](/images/evaluating_classifiers_files/output_30_2.png)
 
 
 ```python
@@ -340,7 +340,7 @@ plot_precision_recall_curve(model, X_test, y_test)
 
 
 
-![png](evaluating_classifiers_files/output_31_2.png)
+![png](/images/evaluating_classifiers_files/output_31_2.png)
 
 
 ### Moving Forward I will be slightly adjusting the context to illustrate different concepts in regards to evaluating classifiers
