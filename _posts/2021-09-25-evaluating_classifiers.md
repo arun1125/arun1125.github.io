@@ -31,41 +31,55 @@ from collections import Counter
 ```
 
 ```python
-#generate sample data and throw into dataframe
-data, labels= make_classification(
-    n_samples = 1000, 
-    n_features = 3, 
-    n_informative=3,
-    n_redundant=0,
-    n_classes = 2, 
-    weights=[0.99]
-)
-data = np.append(data, labels.reshape(-1,1), axis = 1)
-df = pd.DataFrame(data, columns = ['feature_0', 'feature_1', 'feature_2', 'target'])
+def generate_data(w):
+    #generate sample data and throw into dataframe
+    data, labels= make_classification(
+        n_samples = 1000, 
+        n_features = 3, 
+        n_informative=3,
+        n_redundant=0,
+        n_classes = 2, 
+        weights=[w]
+        )
+    data = np.append(data, labels.reshape(-1,1), axis = 1)
+    
+    return pd.DataFrame(data, columns = ['feature_0', 'feature_1', 'feature_2', 'target'])
 ```
 
 ```python
-#split our data into train and test 
-train, test = train_test_split(df,
+def split_data(df):
+    #split our data into train and test 
+    train, test = train_test_split(df,
                 test_size = 0.2,
                 stratify = df['target'],
                 random_state = 42)
 
-X_train, y_train = train.drop('target', axis = 1), train['target']
+    X_train, y_train = train.drop('target', axis = 1), train['target']
 
-X_test, y_test = test.drop('target', axis = 1), test['target']
-
-#instantiate and fit our model
-model = LogisticRegression()
-model.fit(X_train, y_train)
+    X_test, y_test = test.drop('target', axis = 1), test['target']
+    
+    return X_train, X_test, y_train, y_test
 ```
 
+```python
+def train_model(train, target):
+    model = LogisticRegression()
+    model.fit(train, target)
+    return model
+```
 
+```python
+disease_df = generate_data(0.99)
+```
 
+```python
+X_train, X_test, y_train, y_test = split_data(disease_df)
+```
 
-    LogisticRegression()
-
-
+```python
+#instantiate and fit our model
+disease_model = train_model(X_train, y_train)
+```
 
 # Evaluating our model
 
@@ -73,7 +87,7 @@ So we've built our model, it might be rubbish and very crude right now but it ex
 
 ```python
 #get the predictions for our test set
-y_preds = model.predict(X_test)
+y_preds = disease_model.predict(X_test)
 ```
 
 ```python
@@ -244,157 +258,27 @@ How can we deal with class imbalance? (I will not go over this in detail but wil
 
 - Assigning different weights to the minority class - i.e telling our model, hey PAY ATTENTION TO THIS, ITS IMPORTANT!
 
-```python
-y_probs = model.predict_proba(X_test)
-```
-
-```python
-from sklearn.metrics import roc_auc_score, roc_curve
-```
-
-```python
-y_test
-```
-
-
-
-
-    480    0.0
-    729    0.0
-    623    0.0
-    391    0.0
-    100    0.0
-          ... 
-    48     0.0
-    419    0.0
-    35     0.0
-    712    0.0
-    980    0.0
-    Name: target, Length: 200, dtype: float64
-
-
-
-```python
-roc_auc_score(y_test, y_probs[:, 1])
-```
-
-
-
-
-    0.83248730964467
-
-
-
-```python
-roc_curve(y_test, y_probs[:, 1])
-```
-
-
-
-
-    (array([0.        , 0.00507614, 0.02538071, 0.02538071, 0.04568528,
-            0.04568528, 0.43147208, 0.43147208, 1.        ]),
-     array([0.        , 0.        , 0.        , 0.33333333, 0.33333333,
-            0.66666667, 0.66666667, 1.        , 1.        ]),
-     array([1.07778106, 0.07778106, 0.04525172, 0.04492263, 0.03758554,
-            0.03732233, 0.0140653 , 0.01406037, 0.00212909]))
-
-
-
-```python
-from sklearn.metrics import plot_precision_recall_curve, plot_roc_curve
-```
-
-```python
-plot_roc_curve(model, X_test, y_test)
-```
-
-    /Users/arun/Projects/blog/venv/lib/python3.9/site-packages/sklearn/utils/deprecation.py:87: FutureWarning: Function plot_roc_curve is deprecated; Function :func:`plot_roc_curve` is deprecated in 1.0 and will be removed in 1.2. Use one of the class methods: :meth:`sklearn.metric.RocCurveDisplay.from_predictions` or :meth:`sklearn.metric.RocCurveDisplay.from_estimator`.
-      warnings.warn(msg, category=FutureWarning)
-
-
-
-
-
-    <sklearn.metrics._plot.roc_curve.RocCurveDisplay at 0x136b988b0>
-
-
-
-
-![png](/images/evaluating_classifiers_files/output_30_2.png)
-
-
-```python
-plot_precision_recall_curve(model, X_test, y_test)
-```
-
-    /Users/arun/Projects/blog/venv/lib/python3.9/site-packages/sklearn/utils/deprecation.py:87: FutureWarning: Function plot_precision_recall_curve is deprecated; Function `plot_precision_recall_curve` is deprecated in 1.0 and will be removed in 1.2. Use one of the class methods: PrecisionRecallDisplay.from_predictions or PrecisionRecallDisplay.from_estimator.
-      warnings.warn(msg, category=FutureWarning)
-
-
-
-
-
-    <sklearn.metrics._plot.precision_recall_curve.PrecisionRecallDisplay at 0x136bead90>
-
-
-
-
-![png](/images/evaluating_classifiers_files/output_31_2.png)
-
-
 ### Moving Forward I will be slightly adjusting the context to illustrate different concepts in regards to evaluating classifiers
 
-We are now a pub in England and want to give our local members some discounts when the football (not soccer) is on to increase our sales volume, we're going to do this buy trying to figure out which of our customers are actually football fans and sending them special coupons to redeem
+We are now Arsenal FC's head office, and want to predict season ticket holder churn. The president of the club has come to us, the data scientists to try and analyse data on our season ticket holders to predict who would churn and we want to make sure very few people actually leave.
+
 
 ```python
-#generate sample data and throw into dataframe
-data, labels= make_classification(
-    n_samples = 1000, 
-    n_features = 3, 
-    n_informative=3,
-    n_redundant=0,
-    n_classes = 2, 
-    weights=[0.65],
-    random_state=42
-)
-data = np.append(data, labels.reshape(-1,1), axis = 1)
-df = pd.DataFrame(data, columns = ['feature_0', 'feature_1', 'feature_2', 'target'])
-
-#split our data into train and test 
-train, test = train_test_split(df,
-                test_size = 0.2,
-                stratify = df['target'],
-                random_state = 42)
-
-X_train, y_train = train.drop('target', axis = 1), train['target']
-
-X_test, y_test = test.drop('target', axis = 1), test['target']
+football_df = generate_data(0.65)
+X_train, X_test, y_train, y_test = split_data(football_df)
 
 #instantiate and fit our model
-model = LogisticRegression()
-model.fit(X_train, y_train)
-```
+football_model = train_model(X_train, y_train)
 
+y_preds = football_model.predict(X_test)
 
-
-
-    LogisticRegression()
-
-
-
-```python
-y_preds = model.predict(X_test)
-```
-
-```python
 accuracy_score(y_test, y_preds)
 ```
 
 
 
 
-    0.93
+    0.925
 
 
 
@@ -432,13 +316,13 @@ pd.DataFrame(confusion_matrix(y_test, y_preds),
   <tbody>
     <tr>
       <th>Actual False</th>
-      <td>126</td>
-      <td>4</td>
+      <td>124</td>
+      <td>5</td>
     </tr>
     <tr>
       <th>Actual True</th>
       <td>10</td>
-      <td>60</td>
+      <td>61</td>
     </tr>
   </tbody>
 </table>
@@ -454,18 +338,199 @@ print(classification_report(y_test, y_preds))
 
                   precision    recall  f1-score   support
     
-             0.0       0.93      0.97      0.95       130
-             1.0       0.94      0.86      0.90        70
+             0.0       0.93      0.96      0.94       129
+             1.0       0.92      0.86      0.89        71
     
         accuracy                           0.93       200
-       macro avg       0.93      0.91      0.92       200
-    weighted avg       0.93      0.93      0.93       200
+       macro avg       0.92      0.91      0.92       200
+    weighted avg       0.92      0.93      0.92       200
     
 
 
-### Probabilities
+### Lets ROC n Roll
+(If anyone's curious ROC stands for Receiver Operating Characteristic) 
 
-How does a classifier score the 0's and 1's? It actually assigns each sample in the test set with a probability of that sample being in each of the classes (here just 0 and 1). If the probability is greater than 0.5 then we assign it a label of 1 otherwise 0. 
+In comes the roc graph which is a plot of the TPR and FPR
 
-Probabilities are more robust to work with as we can choose our own cut off points 
+TPR = True Positive Rate = Recall = $\large \frac{TP}{TP+FN}$
 
+FPR = False Positive Rate = $\large \frac{FP}{FP+TN}$
+- Note: FPR is describing, out of all the negative samples we have how many of these are we _incorrectly_ guessing
+
+Every point on the curve is a different classifier and below we'll look into how to interpret different points in the TPR/FPR space.
+
+```python
+f, ax = plt.subplots(figsize=(6, 6))
+ax.plot([0, 1], [0, 1], transform=ax.transAxes)
+plt.xlim([-0.01,1.01])
+plt.ylim([-0.01,1.01])
+
+plt.plot(0,1, marker="o", markersize=10)
+plt.annotate("D", (0,1), weight='bold')
+
+plt.plot(0.2,0.8, marker="o", markersize=10, color = 'red')
+plt.annotate("A", (0.2,0.8), weight='bold',)
+
+plt.plot(0.4,0.85, marker="o", markersize=10,  color = 'blue')
+plt.annotate("B", (0.4,0.85), weight='bold',)
+
+plt.plot(0.7,0.7, marker="o", markersize=10)
+plt.annotate("C", (0.7,0.7), weight='bold')
+
+plt.plot(0.8,0.2, marker="o", markersize=10)
+plt.annotate("E", (0.8,0.2), weight='bold')
+
+plt.plot(0,0, marker="o", markersize=10)
+plt.annotate("F", (0,0), weight='bold')
+
+plt.plot(1,1, marker="o", markersize=10)
+plt.annotate("G", (1,1), weight='bold')
+
+plt.xlabel('FPR', weight = 'bold')
+plt.ylabel('TPR', weight = 'bold')
+plt.title('ROC space', weight = 'bold')
+
+plt.show()
+```
+
+
+![png](/images/evaluating_classifiers_files/output_34_0.png)
+
+
+Each point above in the ROC space is a different classifier
+
+- F @ (0,0): A model that never predicts the positive class so the classifier isn't "wrong" (FP) per say but it's never right (TP). 
+
+- G @(1,1): A model that ONLY predicts the positive class
+
+- D @ (0,1): The Perfect Classifier!
+
+Classifiers to the left hand side of the graph are more conservative than classifiers to the right hand side which are more liberal
+
+I.E Classifier A is more conservative than B meaning that it is less likely to predict a positive class than B.
+
+- C @ (0.7, 0.7) is on the y=x line, this is saying that our classifier is as good as random guessing
+
+- E @ (0.8,0.2) is in fact WORSE than random guessing and you should NEVER be below this diagonal line because well ... you can just inverse the prediction? 
+
+Some further points to think about:
+- Curves on the E side of the diagonal are said to use the data to predict in the wrong way
+- Curves on the diagonal need to be given more data to predict properly
+- Curves that are only slightly above the diagonal are they really better than random? or is it just a coincidence
+
+### ROC CURVE
+
+So what is the ROC curve that you've probably heard about?
+
+Classifiers can either be **Discrete** or **Probabalistic**, A Discrete Classifier like our earlier example with the rare disease just predicts 1/0, True/False, you get it.
+
+A probabalisitc classifier outputs some numeric score that represents an instances affinity to that class. The numeric score _COULD_ be a probability or some number such that if it above a threshold value we decide than that instance is part of the positive class
+
+Varying this threshold value between 0 and 1 moves us from the conservative to liberal side but at each value of this threshold we can calculate the TPR and FPR of the classifier and plot it in the ROC space to get a ROC curve. The more points we plot the smoother the curve. We can find the threshold value that gives us the best classifier
+
+### AUC
+
+AUC stands for area under curve and it gives an idea of the expected performance of your classifier
+
+The AUC of a classifier is also equivalent to the probability that the classifier will rank a randomly chosen positive instance higher than a randomly chosen negative instance. 
+
+AUC's lie in the range of [0.5, 1] where 0.5 means we are essentially randomly guessing.
+
+In Practice ROC curves summarise the **Trade off** between TPR and FPR for a model with different positive thresholds. You can think of it as a plot of false alarm rate against hit rate. They are a great for evaluating Balanced Classification problems (where the labels of 0/1 are more or less evenly distributed)
+
+```python
+#we've talked about it enough but now lets actually plot it  
+
+from sklearn.metrics import RocCurveDisplay
+
+X_train, X_test, y_train, y_test = split_data(football_df)
+
+RocCurveDisplay.from_estimator(football_model, X_test, y_test)
+plt.title('Football Model ROC-CURVE', weight= 'bold')
+```
+
+
+
+
+    Text(0.5, 1.0, 'Football Model ROC-CURVE')
+
+
+
+
+![png](/images/evaluating_classifiers_files/output_39_1.png)
+
+
+```python
+#Wow our football model is pretty good in terms of AUC and ROC
+# Lets check out our disease model 
+
+X_train, X_test, y_train, y_test = split_data(disease_df)
+
+RocCurveDisplay.from_estimator(disease_model, X_test, y_test)
+plt.title('Disease Model ROC-CURVE', weight= 'bold')
+```
+
+
+
+
+    Text(0.5, 1.0, 'Disease Model ROC-CURVE')
+
+
+
+
+![png](/images/evaluating_classifiers_files/output_40_1.png)
+
+
+Our Disease model curve looks very strange compared to our football model, we see that the ROC curve isn't as useful
+when evaluating models built on highly imbalanced datasets
+
+What can we do instead? 
+
+### Precision - Recall Curve
+
+
+The Precision-Recall curve summarises the trade off between TPR = True Positive Rate = Recall and Positive Predicted Value = Precision at different thresholds
+
+Lets look at the P-R Curve for our football and disease model
+
+```python
+from sklearn.metrics import PrecisionRecallDisplay
+
+X_train, X_test, y_train, y_test = split_data(football_df)
+
+PrecisionRecallDisplay.from_estimator(football_model, X_test, y_test)
+plt.title('Football Model PR-CURVE', weight= 'bold')
+```
+
+
+
+
+    Text(0.5, 1.0, 'Football Model PR-CURVE')
+
+
+
+
+![png](/images/evaluating_classifiers_files/output_43_1.png)
+
+
+```python
+#The Disease Model
+
+X_train, X_test, y_train, y_test = split_data(disease_df)
+
+PrecisionRecallDisplay.from_estimator(disease_model, X_test, y_test)
+plt.title('Disease Model PR-CURVE', weight= 'bold')
+```
+
+
+
+
+    Text(0.5, 1.0, 'Disease Model PR-CURVE')
+
+
+
+
+![png](/images/evaluating_classifiers_files/output_44_1.png)
+
+
+This Curve looks **HORRENDOUS**
