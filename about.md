@@ -11,7 +11,4 @@ I did my undergrad in Mathematics at the University of Warwick where I had plann
 
 ## Enjoy some of my pictures!
 
-![png](images/IMG_0060.PNG)
-![heic](images/IMG_0060.PNG)
-![heic](images/IMG_0060.PNG)
 
