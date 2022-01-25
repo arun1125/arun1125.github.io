@@ -7,3 +7,8 @@ python upd_md.py file_name.md
 mv file_name_files images/ 
 mv file_name_files images/
 mv file_name.md _posts/{date}-output_name.md
+
+
+
+# OUTCOMES, how you did it
+
