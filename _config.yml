@@ -7,7 +7,7 @@
 # https://learnxinyminutes.com/docs/yaml/
 
 title: The Data Digressive
-description: Follow your boi on socials or if you want to reach out my email and twitter are right there 
+description: Connect with me!
 github_username: arun1125
 
 # Email and twitter are optional:
@@ -21,7 +21,7 @@ use_math: True
 google_analytics:
 
 # Everything below here can be ignored, unless you want to change the theme entirely
-theme: minima
+theme: now
 plugins:
   - jekyll-feed
   - jekyll-gist
