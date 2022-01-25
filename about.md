@@ -4,6 +4,10 @@
 
 Good Question! My Name is Arunachalam Thirunavukkarasu, that's a bit of a mouthful so everyone calls me Arun. Welcome to my website, The Data Digressive! No idea why but you can subscribe to get articles at a rate I have yet to determine. This website is for me to write about topics I find interesting or anything I have learned about recently. Primarily; Statistics, Maths, Computer Science and anything that intersects this trifecta. However, and this is where the digressive part comes in, I write about food, pyschadellics and my travel experiences too! 
 
+
+![png](/images/evaluating_classifiers_files/output_34_0.png)
+
+
 ## Background about me
 
 Currently I'm a Data Scientist in Toronto. Educated and raised in the UK. Born in India. 
