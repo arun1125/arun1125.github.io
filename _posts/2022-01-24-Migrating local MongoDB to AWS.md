@@ -13,9 +13,9 @@ Currently I am exploring how to set up dynamoDB but on my way to this point I fi
 ### Difference between DocumentDB and DynamoDB
 
 DynamoDB is Serverless where as DocumentDB is not.
-In terms of dollar value (which is what we all care about at the end of the day). DyanmoDB is pay per use/as you use resources and DocumentDB is pay hourly
+In terms of dollar value (which is what we all care about at the end of the day). DyanmoDB is pay per use/as you use resources and DocumentDB is pay hourly.
 
-As I was writing this blog post one day of hosting on documentDB cost me $9 usd! I definitely tore down the instance and am currently in the process of moving to dynamoDB but knowing how to set up both noSQL databases will probably help you get more familiar with the entire ecosystem.
+Also querying the databases are different - docDB can be intereacted with the mongodb driver where as dynamoDB has it's own api.
 
 ## Setting up Document DB
 
@@ -63,6 +63,27 @@ Now that you have your docDB cluster set up, your ec2 instance set up and theyre
     - if you provisioned the smallest instance then in your script to be memory efficient you will need to create an iterator for your dataset that reads and writes chunks at a time.
     
 
-## FIN! 
+## Why I'm trying DynamoDB?
 
-### The problem though, as we move on to other parts of our application, ie deploying the frontend and backend, we will need them to be apart of the same VPC's 
+Using docDB as our primary database for our entire NBA ecosystem will slightly complicate any apps I deploy to EB regarding VPCs/Security Groups etc. Currently I haven't figured out how to connect to docDB from my docker container but as I was figuring this out guess what happened?  
+
+They charged me 9$ (Freedom not Maple) for hosting my DB for a day ... infact it was overnight! once I saw this bill I said screw it i'm moving to dynamoDB for serverless hosting as they will charge depending on traffic! 
+
+## Setting up DynamoDB
+
+Setting up DynamoDB is A LOT easier than before. In fact it can be done through your local machine. 
+
+#### Prerequisites 
+
+- Have the Python SDK for AWS installed on your pc (it's called boto3, I don't know why though)
+- Obviously have an AWS account lol 
+
+_note_: the api is a little weird if you haven't seen stuff like this before, and i'm not too entirely comfortable with it either however, working through examples and being able to perform CRUD and some batch operations should get you up and running enough to go out and debug examples on your own
+
+For our example below we will be uploading the same .csv files as in our docDB walk through. Specifically: game_log, historical_pbp, historical_pbp_modelled
+
+```python
+#define your imports
+import pandas as pd
+import boto3
+```
