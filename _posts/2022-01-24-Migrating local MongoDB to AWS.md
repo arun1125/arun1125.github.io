@@ -311,7 +311,7 @@ For our use case we will create a composite key consisting of our GAME_DATE as o
 The Reason I have mentioned these BEFORE we create the table is because once created we can't change it. Annoying, but is it really a bug or feature lol.
 
 
-[Further Reading on this topic](https://dynobase.dev/dynamodb-keys/#:~:text=Is%20it%20possible%20to%20change,then%20remove%20the%20first%20table.) - There are other key/index structures like GSI's but they are currently out of scope. If they ever become in scope i'll write about them.
+[Further Reading on this topic](https://dynobase.dev/dynamodb-keys/#:~:text=Is%20it%20possible%20to%20change,then%20remove%20the%20first%20table.) 
 
 ```python
 # Creating the table
@@ -398,3 +398,64 @@ data = game_log_ddb.query(
     KeyConditionExpression=Key('GAME_DATE').eq(game_date) & Key('GAME_ID').eq(game_id)
 )
 ```
+
+## Global Secondary Indexes
+
+Okay, so you've moved your data from local to dynamoDB, you have everything wokring and have connected dynamoDB to your apis but as you move on with your project you realise that you need to use another column as a key to execute queries. What do you do? We can't reset the Partition key and Sort key that we originally set up + you need to use them anyways for your first use case. 
+
+if only we could create another partition key and sort key? 
+You can! and you can create/delete them even after the database has been created. They are called GSI's or Global Secondary Indexes and they allow you to perform queries like you would with your original partition and sort key!
+
+
+
+```python
+resp = dynamoDB_client.update_table(
+    TableName="game_log",
+    # Any attributes used in your new global secondary index must be declared in AttributeDefinitions
+    AttributeDefinitions=[
+        {
+            "AttributeName": "GAME_ID",
+            "AttributeType": "N"
+        },
+        {
+            "AttributeName": "GAME_DATE",
+            "AttributeType": "S"
+        }
+    ],
+    # This is where you add, update, or delete any global secondary indexes on your table.
+    GlobalSecondaryIndexUpdates=[
+        {
+            "Create": {
+                # You need to name your index and specifically refer to it when using it for queries.
+                "IndexName": "GameIdIndex",
+                # Like the table itself, you need to specify the key schema for an index.
+                # For a global secondary index, you can use a simple or composite key schema.
+                "KeySchema": [
+                    {
+                        "AttributeName": "GAME_ID",
+                        "KeyType": "HASH"
+                    },
+                    {
+                        "AttributeName": "GAME_DATE",
+                        "KeyType": "RANGE"
+                    }
+                ],
+                # You can choose to copy only specific attributes from the original item into the index.
+                # You might want to copy only a few attributes to save space.
+                "Projection": {
+                    "ProjectionType": "ALL"
+                }
+            }
+        }
+    ],
+)
+
+from boto3.dynamodb.conditions import Key
+
+game_log_db.query(IndexName="GameIdIndex",
+                  KeyConditionExpression=Key('GAME_ID').eq(22100540))
+```
+
+If you see here I created a global secondary index that reversed my original key structure just incase I wanted to search for games based purely of game_id!
+
+###### These articles are subject to revision because learning is a journey 
