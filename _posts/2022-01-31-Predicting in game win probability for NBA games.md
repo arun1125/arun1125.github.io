@@ -31,16 +31,15 @@ Reading the [1] definitely cleared up that predicting football was a lot harder 
 
 [4] gave me a sense of what other blogs were doing and something to compare my graphs too
 
-# Data - Gathering/Processing/Cleaning
+# Data Gathering
 
 As mentioned before, python has a GREAT wrapper for the stats.nba.com api again linked [here](https://github.com/swar/nba_api), which is worth checking out in your own time just to see the volume of data available to play with. But I wrote a simple script to collect all the playbyplay data for the last ~7 odd years. 
 The problem is rate limits! 
 
 ```python
 #script to get all live playbyplay data
-from nba_api.stats.endpoints import leaguegamelog
+from nba_api.stats.endpoints import leaguegamelog, playbyplayv2
 import pandas as pd
-import tqdm
 ```
 
 ```python
@@ -58,10 +57,16 @@ league_game_log = pd.concat(league_game_logs)
 
 #### Filtering for home games
 
-The reason i'm filtering for the home games below is because there can only be two outcomes in basketball, win or lose and so if you find the probability that the home team wins then you find the probability that the away team wins too so we focus our modelling efforts on the home team winning
+The reason i'm filtering for the home games below is because there can only be two outcomes in basketball, win or lose and so if you find the probability that the home team wins then you're done. The game log api wrapper returns game logs from both teams perspectives. Matchups with '@' in them are instances from the perspective of the away team.
 
 ```python
 league_game_log = league_game_log[~league_game_log['MATCHUP'].str.contains('@')]
+```
+
+once you get all the game logs you can go and retrieve all playbyplay data. Usually when there are no rate limits I spam the API (WITHIN REASON) using multiprocessing however since the NBA api has some serious API limits this is a slow burning job that'll take a few hours. I suggest you run this before you get on with something else and let it run in the background.
+
+```python
+league_game_log
 ```
 
 
@@ -95,15 +100,7 @@ league_game_log = league_game_log[~league_game_log['MATCHUP'].str.contains('@')]
       <th>WL</th>
       <th>MIN</th>
       <th>FGM</th>
-      <th>FGA</th>
-      <th>FG_PCT</th>
-      <th>FG3M</th>
-      <th>FG3A</th>
-      <th>FG3_PCT</th>
-      <th>FTM</th>
-      <th>FTA</th>
-      <th>FT_PCT</th>
-      <th>OREB</th>
+      <th>...</th>
       <th>DREB</th>
       <th>REB</th>
       <th>AST</th>
@@ -129,15 +126,7 @@ league_game_log = league_game_log[~league_game_log['MATCHUP'].str.contains('@')]
       <td>W</td>
       <td>240</td>
       <td>42</td>
-      <td>93</td>
-      <td>0.452</td>
-      <td>14</td>
-      <td>29</td>
-      <td>0.483</td>
-      <td>18</td>
-      <td>28</td>
-      <td>0.643</td>
-      <td>18</td>
+      <td>...</td>
       <td>34</td>
       <td>52</td>
       <td>23</td>
@@ -147,70 +136,6 @@ league_game_log = league_game_log[~league_game_log['MATCHUP'].str.contains('@')]
       <td>23</td>
       <td>116</td>
       <td>13</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>22013</td>
-      <td>1610612746</td>
-      <td>LAC</td>
-      <td>Los Angeles Clippers</td>
-      <td>0021300003</td>
-      <td>2013-10-29</td>
-      <td>LAC @ LAL</td>
-      <td>L</td>
-      <td>240</td>
-      <td>41</td>
-      <td>83</td>
-      <td>0.494</td>
-      <td>8</td>
-      <td>21</td>
-      <td>0.381</td>
-      <td>13</td>
-      <td>23</td>
-      <td>0.565</td>
-      <td>10</td>
-      <td>30</td>
-      <td>40</td>
-      <td>27</td>
-      <td>11</td>
-      <td>4</td>
-      <td>16</td>
-      <td>21</td>
-      <td>103</td>
-      <td>-13</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>22013</td>
-      <td>1610612741</td>
-      <td>CHI</td>
-      <td>Chicago Bulls</td>
-      <td>0021300002</td>
-      <td>2013-10-29</td>
-      <td>CHI @ MIA</td>
-      <td>L</td>
-      <td>240</td>
-      <td>35</td>
-      <td>83</td>
-      <td>0.422</td>
-      <td>7</td>
-      <td>26</td>
-      <td>0.269</td>
-      <td>18</td>
-      <td>23</td>
-      <td>0.783</td>
-      <td>11</td>
-      <td>30</td>
-      <td>41</td>
-      <td>23</td>
-      <td>11</td>
-      <td>4</td>
-      <td>19</td>
-      <td>27</td>
-      <td>95</td>
-      <td>-12</td>
       <td>1</td>
     </tr>
     <tr>
@@ -225,15 +150,7 @@ league_game_log = league_game_log[~league_game_log['MATCHUP'].str.contains('@')]
       <td>W</td>
       <td>240</td>
       <td>37</td>
-      <td>72</td>
-      <td>0.514</td>
-      <td>11</td>
-      <td>20</td>
-      <td>0.550</td>
-      <td>22</td>
-      <td>29</td>
-      <td>0.759</td>
-      <td>5</td>
+      <td>...</td>
       <td>35</td>
       <td>40</td>
       <td>26</td>
@@ -246,41 +163,263 @@ league_game_log = league_game_log[~league_game_log['MATCHUP'].str.contains('@')]
       <td>1</td>
     </tr>
     <tr>
-      <th>4</th>
+      <th>5</th>
       <td>22013</td>
-      <td>1610612753</td>
-      <td>ORL</td>
-      <td>Orlando Magic</td>
+      <td>1610612754</td>
+      <td>IND</td>
+      <td>Indiana Pacers</td>
       <td>0021300001</td>
       <td>2013-10-29</td>
-      <td>ORL @ IND</td>
+      <td>IND vs. ORL</td>
+      <td>W</td>
+      <td>240</td>
+      <td>34</td>
+      <td>...</td>
+      <td>34</td>
+      <td>44</td>
+      <td>17</td>
+      <td>4</td>
+      <td>18</td>
+      <td>21</td>
+      <td>13</td>
+      <td>97</td>
+      <td>10</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>22013</td>
+      <td>1610612755</td>
+      <td>PHI</td>
+      <td>Philadelphia 76ers</td>
+      <td>0021300005</td>
+      <td>2013-10-30</td>
+      <td>PHI vs. MIA</td>
+      <td>W</td>
+      <td>240</td>
+      <td>43</td>
+      <td>...</td>
+      <td>32</td>
+      <td>40</td>
+      <td>24</td>
+      <td>16</td>
+      <td>1</td>
+      <td>18</td>
+      <td>21</td>
+      <td>114</td>
+      <td>4</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>22013</td>
+      <td>1610612744</td>
+      <td>GSW</td>
+      <td>Golden State Warriors</td>
+      <td>0021300017</td>
+      <td>2013-10-30</td>
+      <td>GSW vs. LAL</td>
+      <td>W</td>
+      <td>240</td>
+      <td>46</td>
+      <td>...</td>
+      <td>41</td>
+      <td>48</td>
+      <td>34</td>
+      <td>8</td>
+      <td>9</td>
+      <td>15</td>
+      <td>22</td>
+      <td>125</td>
+      <td>31</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>1521</th>
+      <td>22021</td>
+      <td>1610612761</td>
+      <td>TOR</td>
+      <td>Toronto Raptors</td>
+      <td>0022100784</td>
+      <td>2022-02-01</td>
+      <td>TOR vs. MIA</td>
+      <td>W</td>
+      <td>240</td>
+      <td>39</td>
+      <td>...</td>
+      <td>28</td>
+      <td>43</td>
+      <td>20</td>
+      <td>9</td>
+      <td>3</td>
+      <td>15</td>
+      <td>24</td>
+      <td>110</td>
+      <td>4</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1522</th>
+      <td>22021</td>
+      <td>1610612750</td>
+      <td>MIN</td>
+      <td>Minnesota Timberwolves</td>
+      <td>0022100770</td>
+      <td>2022-02-01</td>
+      <td>MIN vs. DEN</td>
+      <td>W</td>
+      <td>240</td>
+      <td>46</td>
+      <td>...</td>
+      <td>39</td>
+      <td>52</td>
+      <td>35</td>
+      <td>8</td>
+      <td>9</td>
+      <td>10</td>
+      <td>21</td>
+      <td>130</td>
+      <td>15</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1525</th>
+      <td>22021</td>
+      <td>1610612741</td>
+      <td>CHI</td>
+      <td>Chicago Bulls</td>
+      <td>0022100769</td>
+      <td>2022-02-01</td>
+      <td>CHI vs. ORL</td>
+      <td>W</td>
+      <td>240</td>
+      <td>46</td>
+      <td>...</td>
+      <td>38</td>
+      <td>49</td>
+      <td>25</td>
+      <td>5</td>
+      <td>6</td>
+      <td>10</td>
+      <td>15</td>
+      <td>126</td>
+      <td>11</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1526</th>
+      <td>22021</td>
+      <td>1610612759</td>
+      <td>SAS</td>
+      <td>San Antonio Spurs</td>
+      <td>0022100771</td>
+      <td>2022-02-01</td>
+      <td>SAS vs. GSW</td>
       <td>L</td>
       <td>240</td>
-      <td>36</td>
-      <td>93</td>
-      <td>0.387</td>
-      <td>9</td>
-      <td>19</td>
-      <td>0.474</td>
-      <td>6</td>
-      <td>10</td>
-      <td>0.600</td>
-      <td>13</td>
-      <td>26</td>
-      <td>39</td>
+      <td>46</td>
+      <td>...</td>
+      <td>29</td>
+      <td>34</td>
+      <td>33</td>
+      <td>7</td>
+      <td>7</td>
+      <td>14</td>
       <td>17</td>
-      <td>10</td>
-      <td>6</td>
-      <td>19</td>
+      <td>120</td>
+      <td>-4</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1528</th>
+      <td>22021</td>
+      <td>1610612756</td>
+      <td>PHX</td>
+      <td>Phoenix Suns</td>
+      <td>0022100772</td>
+      <td>2022-02-01</td>
+      <td>PHX vs. BKN</td>
+      <td>W</td>
+      <td>240</td>
+      <td>42</td>
+      <td>...</td>
+      <td>30</td>
+      <td>37</td>
       <td>26</td>
-      <td>87</td>
-      <td>-10</td>
+      <td>8</td>
+      <td>4</td>
+      <td>16</td>
+      <td>19</td>
+      <td>121</td>
+      <td>10</td>
       <td>1</td>
     </tr>
   </tbody>
 </table>
+<p>10284 rows × 29 columns</p>
 </div>
 
 
 
-Why did I do the abov
+```python
+from tqdm import tqdm
+from time import sleep
+
+pbp = []
+for game_id in tqdm(league_game_log.GAME_ID):
+    pbp.append(playbyplayv2.PlayByPlayV2(game_id).get_data_frames()[0])
+    sleep(0.2)
+    #to ensure over time we aren't spamming the api and hitting any rate limits, set it to whatever.
+```
+
+      0%|▏                                                                                                                                                                         | 14/10284 [00:09<1:52:42,  1.52it/s]
+
+
+```python
+df = pd.concat(pbp)
+df.to_csv('bpbp.csv', index=False)
+```
+
+# Data Preprocessing and Featurizing 
+
+okay we have our play by play data but now what? 
+The first version of our model was to replicate what has already been done. So our current goal is to build 960 logistic regression models, one for each three second period.
+
+Since our play by play data is not uniformly generated i.e. records have times from 0-2880 but they are not uniformly spaced and definitely not every three seconds (the shot clock itself goes on for 24 seconds) so what can we do? 
+
+As Data Scientists real world data is never going to be perfect, formatting, quality, frequency etc but we must do what we can with what we have. 
+
+And so we need to make assumptions and preprocess our data accordingly. 
+
+Assumptions we're going to make:
+- The state of the game is the same until the next play by play event i.e. if a play happened at 2700 and the score was 10-15 and the next play happened at 2680 and the score is now 12-15 then the time between 2700 and 2680 still has the score 10-15. 
+
+The features we are aiming to produce are for the first iteration is
+
+- Whos got possesion? 
+- Score difference
+- is it over time? 
