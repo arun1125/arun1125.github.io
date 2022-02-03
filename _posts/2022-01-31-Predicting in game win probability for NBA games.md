@@ -66,326 +66,6 @@ league_game_log = league_game_log[~league_game_log['MATCHUP'].str.contains('@')]
 once you get all the game logs you can go and retrieve all playbyplay data. Usually when there are no rate limits I spam the API (WITHIN REASON) using multiprocessing however since the NBA api has some serious API limits this is a slow burning job that'll take a few hours. I suggest you run this before you get on with something else and let it run in the background.
 
 ```python
-league_game_log
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>SEASON_ID</th>
-      <th>TEAM_ID</th>
-      <th>TEAM_ABBREVIATION</th>
-      <th>TEAM_NAME</th>
-      <th>GAME_ID</th>
-      <th>GAME_DATE</th>
-      <th>MATCHUP</th>
-      <th>WL</th>
-      <th>MIN</th>
-      <th>FGM</th>
-      <th>...</th>
-      <th>DREB</th>
-      <th>REB</th>
-      <th>AST</th>
-      <th>STL</th>
-      <th>BLK</th>
-      <th>TOV</th>
-      <th>PF</th>
-      <th>PTS</th>
-      <th>PLUS_MINUS</th>
-      <th>VIDEO_AVAILABLE</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>22013</td>
-      <td>1610612747</td>
-      <td>LAL</td>
-      <td>Los Angeles Lakers</td>
-      <td>0021300003</td>
-      <td>2013-10-29</td>
-      <td>LAL vs. LAC</td>
-      <td>W</td>
-      <td>240</td>
-      <td>42</td>
-      <td>...</td>
-      <td>34</td>
-      <td>52</td>
-      <td>23</td>
-      <td>8</td>
-      <td>6</td>
-      <td>19</td>
-      <td>23</td>
-      <td>116</td>
-      <td>13</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>22013</td>
-      <td>1610612748</td>
-      <td>MIA</td>
-      <td>Miami Heat</td>
-      <td>0021300002</td>
-      <td>2013-10-29</td>
-      <td>MIA vs. CHI</td>
-      <td>W</td>
-      <td>240</td>
-      <td>37</td>
-      <td>...</td>
-      <td>35</td>
-      <td>40</td>
-      <td>26</td>
-      <td>10</td>
-      <td>7</td>
-      <td>20</td>
-      <td>21</td>
-      <td>107</td>
-      <td>12</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>22013</td>
-      <td>1610612754</td>
-      <td>IND</td>
-      <td>Indiana Pacers</td>
-      <td>0021300001</td>
-      <td>2013-10-29</td>
-      <td>IND vs. ORL</td>
-      <td>W</td>
-      <td>240</td>
-      <td>34</td>
-      <td>...</td>
-      <td>34</td>
-      <td>44</td>
-      <td>17</td>
-      <td>4</td>
-      <td>18</td>
-      <td>21</td>
-      <td>13</td>
-      <td>97</td>
-      <td>10</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>6</th>
-      <td>22013</td>
-      <td>1610612755</td>
-      <td>PHI</td>
-      <td>Philadelphia 76ers</td>
-      <td>0021300005</td>
-      <td>2013-10-30</td>
-      <td>PHI vs. MIA</td>
-      <td>W</td>
-      <td>240</td>
-      <td>43</td>
-      <td>...</td>
-      <td>32</td>
-      <td>40</td>
-      <td>24</td>
-      <td>16</td>
-      <td>1</td>
-      <td>18</td>
-      <td>21</td>
-      <td>114</td>
-      <td>4</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>8</th>
-      <td>22013</td>
-      <td>1610612744</td>
-      <td>GSW</td>
-      <td>Golden State Warriors</td>
-      <td>0021300017</td>
-      <td>2013-10-30</td>
-      <td>GSW vs. LAL</td>
-      <td>W</td>
-      <td>240</td>
-      <td>46</td>
-      <td>...</td>
-      <td>41</td>
-      <td>48</td>
-      <td>34</td>
-      <td>8</td>
-      <td>9</td>
-      <td>15</td>
-      <td>22</td>
-      <td>125</td>
-      <td>31</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>...</th>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-    </tr>
-    <tr>
-      <th>1521</th>
-      <td>22021</td>
-      <td>1610612761</td>
-      <td>TOR</td>
-      <td>Toronto Raptors</td>
-      <td>0022100784</td>
-      <td>2022-02-01</td>
-      <td>TOR vs. MIA</td>
-      <td>W</td>
-      <td>240</td>
-      <td>39</td>
-      <td>...</td>
-      <td>28</td>
-      <td>43</td>
-      <td>20</td>
-      <td>9</td>
-      <td>3</td>
-      <td>15</td>
-      <td>24</td>
-      <td>110</td>
-      <td>4</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>1522</th>
-      <td>22021</td>
-      <td>1610612750</td>
-      <td>MIN</td>
-      <td>Minnesota Timberwolves</td>
-      <td>0022100770</td>
-      <td>2022-02-01</td>
-      <td>MIN vs. DEN</td>
-      <td>W</td>
-      <td>240</td>
-      <td>46</td>
-      <td>...</td>
-      <td>39</td>
-      <td>52</td>
-      <td>35</td>
-      <td>8</td>
-      <td>9</td>
-      <td>10</td>
-      <td>21</td>
-      <td>130</td>
-      <td>15</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>1525</th>
-      <td>22021</td>
-      <td>1610612741</td>
-      <td>CHI</td>
-      <td>Chicago Bulls</td>
-      <td>0022100769</td>
-      <td>2022-02-01</td>
-      <td>CHI vs. ORL</td>
-      <td>W</td>
-      <td>240</td>
-      <td>46</td>
-      <td>...</td>
-      <td>38</td>
-      <td>49</td>
-      <td>25</td>
-      <td>5</td>
-      <td>6</td>
-      <td>10</td>
-      <td>15</td>
-      <td>126</td>
-      <td>11</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>1526</th>
-      <td>22021</td>
-      <td>1610612759</td>
-      <td>SAS</td>
-      <td>San Antonio Spurs</td>
-      <td>0022100771</td>
-      <td>2022-02-01</td>
-      <td>SAS vs. GSW</td>
-      <td>L</td>
-      <td>240</td>
-      <td>46</td>
-      <td>...</td>
-      <td>29</td>
-      <td>34</td>
-      <td>33</td>
-      <td>7</td>
-      <td>7</td>
-      <td>14</td>
-      <td>17</td>
-      <td>120</td>
-      <td>-4</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>1528</th>
-      <td>22021</td>
-      <td>1610612756</td>
-      <td>PHX</td>
-      <td>Phoenix Suns</td>
-      <td>0022100772</td>
-      <td>2022-02-01</td>
-      <td>PHX vs. BKN</td>
-      <td>W</td>
-      <td>240</td>
-      <td>42</td>
-      <td>...</td>
-      <td>30</td>
-      <td>37</td>
-      <td>26</td>
-      <td>8</td>
-      <td>4</td>
-      <td>16</td>
-      <td>19</td>
-      <td>121</td>
-      <td>10</td>
-      <td>1</td>
-    </tr>
-  </tbody>
-</table>
-<p>10284 rows × 29 columns</p>
-</div>
-
-
-
-```python
 from tqdm import tqdm
 from time import sleep
 
@@ -423,3 +103,310 @@ The features we are aiming to produce are for the first iteration is
 - Whos got possesion? 
 - Score difference
 - is it over time? 
+
+```python
+# Whos got possession? 
+df[['home_true', 'visitor_true']] = df[['HOMEDESCRIPTION','VISITORDESCRIPTION']].notnull().astype(int)
+
+df['block'] = df['HOMEDESCRIPTION'].str.contains("BLOCK").fillna(False)
+df['steal'] = df['HOMEDESCRIPTION'].str.contains("STEAL").fillna(False)
+
+def home_poss(d):
+    #logic follows that whenever the home description or visitor description is filled out then its that teams 
+    #possession unless theres a block or steal!
+    if (d['home_true'] == 1) & (d['visitor_true']==0):
+        return 1
+    elif (d['home_true'] == 0) & (d['visitor_true']==1):
+        return 0
+    else:
+        if d['block'] or d['steal']:
+            return 1
+        else:
+            return 0
+        
+df['home_poss'] = df.apply(home_poss, axis = 1)
+
+#get the score difference
+df['score'] = df.groupby('GAME_ID')['SCORE'].ffill().fillna('0-0')
+df[['away_score', 'home_score']] = df['score'].str.split('-', expand=True)
+df['diff'] = pd.to_numeric(df['home_score']) - pd.to_numeric(df['away_score'])
+
+#To see what period we're in, if we're in overtime it will show us what period of overtime we're in otherwise just 0
+#for regulation games
+df['OT_ind'] = (df['PERIOD']-4).clip(lower=0)
+
+
+#to find the time remaining
+from datetime import datetime
+
+def str_to_time(str1):
+    time_ = datetime.strptime(str1, "%M:%S")
+    return time_.second + time_.minute*60
+
+df['seconds'] = df['PCTIMESTRING'].apply(str_to_time)
+
+def find_seconds_left(x):
+    if x == 1:
+        return 3*720
+    elif x == 2: 
+        return 2*720
+    elif x == 3:
+        return 720
+    else:
+        return 0
+    
+df['seconds_left_in_game_from_quarter'] = df['PERIOD'].apply(find_seconds_left)
+
+df['time_remaining'] = df['seconds'] + df['seconds_left_in_game_from_quarter']
+
+#Create our targets
+df['home_team_win'] = df.groupby('GAME_ID')['diff'].last().clip(lower=0, upper=1).rename('home_team_win')
+
+#final dataset subsetting for our relevant columns
+data = df[['GAME_ID','home_poss', 'diff', 'time_remaining', 'OT_ind']]
+```
+
+So now we have our data in the format of 
+
+GAME_ID | home_poss | diff | time_remaining | OT_ind | home_team_win
+
+But, how do we build our 960 models? especially since looking at our data shows that the play by plays recorded are definitely not uniformly distributed in three second intervals
+
+We have to do some clever indexing and fast filling
+
+```python
+game_ids = list(df['GAME_ID'].sort_values().unique())
+iterables = [game_ids, list(range(2880,-1,-1))]
+countdown = pd.DataFrame(index = pd.MultiIndex.from_product(iterables, names=["GAME_ID", "time_remaining"])).reset_index()
+
+final = countdown.merge(data, on = ['GAME_ID', 'time_remaining'], how='left').ffill()
+final = final[final['time_remaining'].isin(range(0,2883,3))]
+final.to_csv('modelling_data.csv', index=False)
+```
+
+Now we have our modelling data time to build our series of logisitc regression models
+
+# Model Building - Part 1
+
+```python
+from sklearn.linear_model import LogisticRegression
+```
+
+```python
+#create our train and test sets, our test set will be the most recent last 500 games
+test_games = df['GAME_ID'].unique()[-500:]
+test_games =  np.append(test_games, 21501228) #(Kobe Bryants last game)
+
+test = df[df['GAME_ID'].isin(test_games)]
+train = df[~(df['GAME_ID'].isin(test_games))]
+
+train = train.drop('GAME_ID', axis = 1).set_index('time_remaining')
+test = test.set_index(['time_remaining', 'GAME_ID'])
+
+X = train.drop('home_team_win', axis = 1)
+y = train['home_team_win']
+
+#build our series of logistic regression models 
+models = {}
+for time in X.index.unique():
+    model_temp = LogisticRegression()
+    X_temp = X.loc[time]
+    y_temp = y.loc[time]
+    model_temp.fit(X_temp.values, y_temp.values)
+    models[time] = model_temp
+```
+
+```python
+import warnings
+warnings.filterwarnings('ignore')
+#create our test set predictions
+probs = []
+preds = []
+for time in test.index.levels[0]:
+    temp = test.loc[time].drop('home_team_win', axis = 1)
+    probs.append(pd.DataFrame(models[time].predict_proba(temp), columns = ['prob_home_lose', 'prob_home_win']))
+    preds.append(pd.DataFrame(models[time].predict(temp), columns=['preds']))
+
+probs_df = pd.concat(probs).reset_index(drop=True)
+preds_df = pd.concat(preds).reset_index(drop=True)
+
+test_df = pd.concat([test.reset_index(), probs_df, preds_df], axis = 1).set_index('GAME_ID').sort_index().sort_values(by=['OT_ind','time_remaining'], ascending=[True, False])
+
+test_df['time'] = 2880-test_df['time_remaining']
+
+```
+
+```python
+test_df.loc[21501228].sort_values(by='time').plot(x='time', y=['prob_home_win'], figsize=(15,8))
+```
+
+![png](Predicting in game win probability for NBA games_files/images/kobe_last_game_log_reg_pred.png)
+
+## Moving forward!
+
+I want to predict NBA games live, a lot of this on the fly data manipulation can make predictions slower and add a lot of over head to each computation so what can we do moving forward? 
+
+- Include time as a feature
+- How can we incorporate more team specific information
+
+
+Ideas! 
+- Use a neural network to learn features as we have a lot of tablular data
+- Incorporate 538's ELO score - this takes into account recent team performance, injuries etc and is managed externally, completely. Obviously composing all these complicated aspects of data into one metric we lose information however it is a good heuristic for now
+
+```python
+#Get Elo Scores
+
+def read_url_to_csv(url):
+    r = requests.get(url)
+    data = io.StringIO(r.text)
+    df = pd.read_csv(data, sep=",")
+    return df
+
+elo_url = 'https://projects.fivethirtyeight.com/nba-model/nba_elo.csv'
+
+elo = read_url_to_csv(elo_url)
+elo = elo[elo['date'] > '2012-01-01']
+
+elo.loc[:, 'elo_difference'] = np.abs(elo['elo1_pre'] - elo['elo2_pre'])
+
+elo = elo[['date', 'team1', 'elo1_pre', 'elo2_pre', 'elo_difference']]
+
+elo['team1'] = elo['team1'].replace({'BRK':'BKN',
+                                     'PHO':'PHX',
+                                    'CHO':'CHA',})
+
+#To merge ELO scores with my games since game_id isn't a universal key amongst disparate basketball data sources
+
+all_games = league_game_log.copy()
+all_games[['Home', 'Away']] = all_games['MATCHUP'].str.split('vs.', expand=True)
+all_games['Home'] = all_games['Home'].str.strip()
+all_games['GAME_ID'] = all_games['GAME_ID'].astype(int)
+all_games['home_team_win'] = all_games['WL'].replace({'W':1, 'L':0})
+
+
+elo_w_game_ids = all_games.merge(elo, left_on=['GAME_DATE', 'Home'], right_on = ['date', 'team1'])
+#merge it with our 'not standardized' to three seconds data
+df = df.merge(elo_w_game_ids[['GAME_ID', 'elo1_pre', 'elo2_pre', 'elo_difference', 'home_team_win']], on = ['GAME_ID'])
+```
+
+```python
+train_games = games[:7000]
+test_games = games[7000:]
+train = df[df['GAME_ID'].isin(train_games)].drop(['GAME_ID', 'elo_difference'], axis = 1)
+
+X_train = train.drop(['home_team_win'], axis = 1)
+y_train = train['home_team_win']
+
+
+test = df[df['GAME_ID'].isin(test_games)]
+
+X_test = test.drop(['home_team_win', 'GAME_ID'], axis = 1)
+y_test = test['home_team_win']
+```
+
+```python
+import tensorflow as tf
+```
+
+```python
+model_wO_elo = tf.keras.models.Sequential([
+    tf.keras.layers.Dense(12, activation='relu', input_shape=[4,]),
+    tf.keras.layers.Dense(12, activation='relu'),
+    tf.keras.layers.Dense(1, activation='sigmoid')
+])
+model_wO_elo.compile(optimizer=tf.keras.optimizers.RMSprop(1e-3), loss='binary_crossentropy', metrics=['accuracy', 'AUC'])
+model_wO_elo.summary()
+
+model = tf.keras.models.Sequential([
+    tf.keras.layers.Dense(12, activation='relu', input_shape=[6,]),
+    tf.keras.layers.Dense(12, activation='relu'),
+    tf.keras.layers.Dense(1, activation='sigmoid')
+])
+model.compile(optimizer=tf.keras.optimizers.RMSprop(1e-3), loss='binary_crossentropy', metrics=['accuracy', 'AUC'])
+model.summary()
+```
+
+    Model: "sequential"
+    _________________________________________________________________
+     Layer (type)                Output Shape              Param #   
+    =================================================================
+     dense (Dense)               (None, 12)                60        
+                                                                     
+     dense_1 (Dense)             (None, 12)                156       
+                                                                     
+     dense_2 (Dense)             (None, 1)                 13        
+                                                                     
+    =================================================================
+    Total params: 229
+    Trainable params: 229
+    Non-trainable params: 0
+    _________________________________________________________________
+    Model: "sequential_1"
+    _________________________________________________________________
+     Layer (type)                Output Shape              Param #   
+    =================================================================
+     dense_3 (Dense)             (None, 12)                84        
+                                                                     
+     dense_4 (Dense)             (None, 12)                156       
+                                                                     
+     dense_5 (Dense)             (None, 1)                 13        
+                                                                     
+    =================================================================
+    Total params: 253
+    Trainable params: 253
+    Non-trainable params: 0
+    _________________________________________________________________
+
+
+    2022-02-03 08:05:46.740678: I tensorflow/core/platform/cpu_feature_guard.cc:151] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+    To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+
+
+```python
+X_train_wO_elo = X_train.drop(['elo1_pre', 'elo2_pre'], axis = 1)
+```
+
+```python
+model_wO_elo.fit(X_train_wO_elo.values,
+          y_train.values,
+          verbose=1,
+          shuffle=True,
+          epochs=15,
+          batch_size=512)
+
+model.fit(X_train.values,
+          y_train.values,
+          verbose=1,
+          shuffle=True,
+          epochs=15,
+          batch_size=512)
+
+model.save('../Models/TF_model_w_elo.h5')
+model_wO_elo.save('../Models/TF_model_wO_elo.h5')
+```
+
+```python
+test.loc[:, 'preds_w_elo'] = model.predict_on_batch(X_test[X_train.columns])
+
+test.loc[:, 'preds_wO_elo'] = model_wO_elo.predict_on_batch(X_test[X_train_wO_elo.columns])
+```
+
+```python
+from sklearn.metrics import brier_score_loss
+brier_score_loss(test['home_team_win'], test['preds_w_elo'])
+```
+
+    0.15495321224308004
+
+
+```python
+brier_score_loss(test['home_team_win'], test['preds_wO_elo'])
+```
+
+    0.1654293641223685
+
+
+# Evaluating our model
+
+
