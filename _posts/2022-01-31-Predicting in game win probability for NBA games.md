@@ -234,3 +234,172 @@ test_df = pd.concat([test.reset_index(), probs_df, preds_df], axis = 1).set_inde
 test_df['time'] = 2880-test_df['time_remaining']
 
 ```
+
+## Moving forward!
+
+I want to predict NBA games live, a lot of this on the fly data manipulation can make predictions slower and add a lot of over head to each computation so what can we do moving forward? 
+
+- Include time as a feature
+- How can we incorporate more team specific information
+
+
+Ideas! 
+- Use a neural network to learn features as we have a lot of tablular data
+- Incorporate 538's ELO score - this takes into account recent team performance, injuries etc and is managed externally, completely. Obviously composing all these complicated aspects of data into one metric we lose information however it is a good heuristic for now
+
+```python
+#Get Elo Scores
+
+def read_url_to_csv(url):
+    r = requests.get(url)
+    data = io.StringIO(r.text)
+    df = pd.read_csv(data, sep=",")
+    return df
+
+elo_url = 'https://projects.fivethirtyeight.com/nba-model/nba_elo.csv'
+
+elo = read_url_to_csv(elo_url)
+elo = elo[elo['date'] > '2012-01-01']
+
+elo.loc[:, 'elo_difference'] = np.abs(elo['elo1_pre'] - elo['elo2_pre'])
+
+elo = elo[['date', 'team1', 'elo1_pre', 'elo2_pre', 'elo_difference']]
+
+elo['team1'] = elo['team1'].replace({'BRK':'BKN',
+                                     'PHO':'PHX',
+                                    'CHO':'CHA',})
+
+#To merge ELO scores with my games since game_id isn't a universal key amongst disparate basketball data sources
+
+all_games = league_game_log.copy()
+all_games[['Home', 'Away']] = all_games['MATCHUP'].str.split('vs.', expand=True)
+all_games['Home'] = all_games['Home'].str.strip()
+all_games['GAME_ID'] = all_games['GAME_ID'].astype(int)
+all_games['home_team_win'] = all_games['WL'].replace({'W':1, 'L':0})
+
+
+elo_w_game_ids = all_games.merge(elo, left_on=['GAME_DATE', 'Home'], right_on = ['date', 'team1'])
+#merge it with our 'not standardized' to three seconds data
+df = df.merge(elo_w_game_ids[['GAME_ID', 'elo1_pre', 'elo2_pre', 'elo_difference', 'home_team_win']], on = ['GAME_ID'])
+```
+
+```python
+train_games = games[:7000]
+test_games = games[7000:]
+train = df[df['GAME_ID'].isin(train_games)].drop(['GAME_ID', 'elo_difference'], axis = 1)
+
+X_train = train.drop(['home_team_win'], axis = 1)
+y_train = train['home_team_win']
+
+
+test = df[df['GAME_ID'].isin(test_games)]
+
+X_test = test.drop(['home_team_win', 'GAME_ID'], axis = 1)
+y_test = test['home_team_win']
+```
+
+```python
+import tensorflow as tf
+```
+
+```python
+model_wO_elo = tf.keras.models.Sequential([
+    tf.keras.layers.Dense(12, activation='relu', input_shape=[4,]),
+    tf.keras.layers.Dense(12, activation='relu'),
+    tf.keras.layers.Dense(1, activation='sigmoid')
+])
+model_wO_elo.compile(optimizer=tf.keras.optimizers.RMSprop(1e-3), loss='binary_crossentropy', metrics=['accuracy', 'AUC'])
+model_wO_elo.summary()
+
+model = tf.keras.models.Sequential([
+    tf.keras.layers.Dense(12, activation='relu', input_shape=[6,]),
+    tf.keras.layers.Dense(12, activation='relu'),
+    tf.keras.layers.Dense(1, activation='sigmoid')
+])
+model.compile(optimizer=tf.keras.optimizers.RMSprop(1e-3), loss='binary_crossentropy', metrics=['accuracy', 'AUC'])
+model.summary()
+```
+
+    Model: "sequential"
+    _________________________________________________________________
+     Layer (type)                Output Shape              Param #   
+    =================================================================
+     dense (Dense)               (None, 12)                60        
+                                                                     
+     dense_1 (Dense)             (None, 12)                156       
+                                                                     
+     dense_2 (Dense)             (None, 1)                 13        
+                                                                     
+    =================================================================
+    Total params: 229
+    Trainable params: 229
+    Non-trainable params: 0
+    _________________________________________________________________
+    Model: "sequential_1"
+    _________________________________________________________________
+     Layer (type)                Output Shape              Param #   
+    =================================================================
+     dense_3 (Dense)             (None, 12)                84        
+                                                                     
+     dense_4 (Dense)             (None, 12)                156       
+                                                                     
+     dense_5 (Dense)             (None, 1)                 13        
+                                                                     
+    =================================================================
+    Total params: 253
+    Trainable params: 253
+    Non-trainable params: 0
+    _________________________________________________________________
+
+
+    2022-02-03 08:05:46.740678: I tensorflow/core/platform/cpu_feature_guard.cc:151] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+    To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+
+
+```python
+X_train_wO_elo = X_train.drop(['elo1_pre', 'elo2_pre'], axis = 1)
+```
+
+```python
+model_wO_elo.fit(X_train_wO_elo.values,
+          y_train.values,
+          verbose=1,
+          shuffle=True,
+          epochs=15,
+          batch_size=512)
+
+model.fit(X_train.values,
+          y_train.values,
+          verbose=1,
+          shuffle=True,
+          epochs=15,
+          batch_size=512)
+
+model.save('../Models/TF_model_w_elo.h5')
+model_wO_elo.save('../Models/TF_model_wO_elo.h5')
+```
+
+```python
+test.loc[:, 'preds_w_elo'] = model.predict_on_batch(X_test[X_train.columns])
+
+test.loc[:, 'preds_wO_elo'] = model_wO_elo.predict_on_batch(X_test[X_train_wO_elo.columns])
+```
+
+```python
+from sklearn.metrics import brier_score_loss
+brier_score_loss(test['home_team_win'], test['preds_w_elo'])
+```
+
+    0.15495321224308004
+
+
+```python
+brier_score_loss(test['home_team_win'], test['preds_wO_elo'])
+```
+
+    0.1654293641223685
+
+
+# Evaluating our model
+
+
