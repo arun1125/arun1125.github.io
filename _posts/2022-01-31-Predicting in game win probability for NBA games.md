@@ -385,21 +385,111 @@ test.loc[:, 'preds_w_elo'] = model.predict_on_batch(X_test[X_train.columns])
 test.loc[:, 'preds_wO_elo'] = model_wO_elo.predict_on_batch(X_test[X_train_wO_elo.columns])
 ```
 
+# Evaluating our model
+
+
+
+## Brier Score
+
+### What is it? 
+#### Brier Score Loss = $\frac{1}{N}\sum_{i=1}^{N}(p_{i} - y_{i})^2$
+
+where:
+- $p_{i}$ is the predicted probability of the sample
+- $y_{i}$ is the true value (either 1 or 0)
+- N is the number of samples
+
+A way to interpret this metric is as a less harsh version of log loss
+
+
+## Log Loss
+
+### What is it?
+
+Log loss is the $-1$*(average of the log of the corrected probabilities)
+
+### so what does that mean? 
+
+An example for corrected probabilities
+- True = [1,0,1]
+- predicted = [0.9, 0.3, 0.1] 
+- corrected_probabilities = [0.9, 0.3, 0.9]
+- log of the corrected probabilities = [-0.10536052, -1.2039728 , -0.10536052]
+- sum of above = -1.4146938356415888
+- average of sum = -0.47
+- -1 * avg of sum = 0.47
+
+### As a formula 
+
+#### Log Loss  = -$\frac{1}{N}\sum_{i=1}^{N}y_{i}(log(p_{i})) + (1-y_{i})log(1-p_{i})$
+
+
+### Why does this exist?
+
+You can use just the liklihoods and just multiply the corrected probabilities to get a model score BUT, as N gets large the model score gets very small and so thats why we use logs, we use -1 to keep the convention of "the lower the score the better"
+
+
+### What does less harsh mean? 
+
+Something I asked too but an easy way to see that is by plotting the log graph vs the x^2 graph
+
+```python
+# Plot the graphs
+import matplotlib.pyplot as plt
+import numpy as np
+%matplotlib inline
+
+fig, ax = plt.subplots()
+
+x = np.arange(0,1,0.01)
+y = [(1-x_)**2 for x_ in x]
+log_y = [-np.log(x_) for x_ in x]
+ax.plot(x,log_y, label = 'log_loss')
+ax.plot(x, y, label = 'squared_loss')
+ax.set_title('comparing loss functions')
+ax.legend()
+```
+
+    /var/folders/6n/_mn7r8yx4fd_kqsrk0pcy6hc0000gn/T/ipykernel_5981/2558506998.py:10: RuntimeWarning: divide by zero encountered in log
+      log_y = [-np.log(x_) for x_ in x]
+
+
+
+
+
+    <matplotlib.legend.Legend at 0x12398e040>
+
+
+
+
+![png](Predicting in game win probability for NBA games_files/output_34_2.png)
+
+
+## The grand reveal
+
+Our brier scores for our two models are
+
 ```python
 from sklearn.metrics import brier_score_loss
+print('Brier Score for model built with elo:')
 brier_score_loss(test['home_team_win'], test['preds_w_elo'])
 ```
 
+    Brier Score for model built with elo:
     0.15495321224308004
 
 
 ```python
+print('Brier Score for model built without elo:')
 brier_score_loss(test['home_team_win'], test['preds_wO_elo'])
 ```
 
+    Brier Score for model built without elo:
     0.1654293641223685
 
 
-# Evaluating our model
+## Which is pretty good! 
 
+I'll be writing about how I deployed this model with fast api, docker etc on another post
 
+###### These articles are subject to revision because learning is a journey 
