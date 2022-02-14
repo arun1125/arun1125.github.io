@@ -61,17 +61,6 @@ from matplotlib import pyplot as plt
 venn2(subsets = (0.65, 0.25, 0.1), set_labels = ('Event A', 'Event B'))
 ```
 
-
-
-
-    <matplotlib_venn._common.VennDiagram at 0x123378190>
-
-
-
-
-![png](Bayesian Statistics with Python_files/output_4_1.png)
-
-
 We want to find out the probability of A happening if B has already happened. 
 
 The Probability of B happening is 0.35
@@ -129,11 +118,59 @@ It took me a minute but now I see that it's very intuitive. You have a world vie
 
 # An example
 
-As you might've guess from my previous blog posts im a massive NBA fan it'just incredibly serendipituous that they have a wealth of data to explore, analyse and model. 
+As you might've guess from my previous blog posts im a massive NBA fan so we're looking at a basketball example.
 
-As you might've seen recently James harden was traded to the Philly for Ben Simmons!
+As you might've seen recently James harden was traded to the 76ers for Ben Simmons!
 
-What I want to model is how James hardens scoring changed over his career. It definitely has; from his time as a sixth man, to NBA MVP almost dethroning the **KD warriors** in 2018 and then moving to the nets where him kyrie and kd played a grand total of 16 games together lol. But actually quantifiying the change will be interesting to see. 
+and that's inspired me to try and model hardens scoring numbers over the last few seasons as an introductory motivator on bayesian statistics. 
+
+What we will be modelling is if his scoring numbers have changed over time. Suddenly or Gradually. 
+
+### How we're going to model it
+
+We can use the Poison Distribution to model Hardens scoring numbers
+
+$H_{i} \sim Poisson(\lambda)$
+
+The Poisson distriubtion is good for modelling counts and rates.
+
+- $\lambda$: This is a _PARAMETER_ of our distribution, it controls the distributions shape. Other famous parameters you might know include the mean and std of the Normal distribution.
+
+Our goal essentially is to _estimate_ this parameter lambda but it's a bit more nuanced than that. The idea is that hardens scoring rate can be modelled using a poisson distribution with paramter $\lambda$ but we want to find when/if his scoring changes.
+
+To find out if his scoring rate actually changes we will be trying to find 
+
+- $\lambda_{1}$ which is his scoring rate before a certain time say $\tau$
+- $\lambda_{2}$ and this is his scoring rate after $\tau$
+
+
+**So our goal is to estimate $\lambda_{1}$, $\lambda_{2}$ and $\tau$**
+(I.e What is his scoring rate before, what is his scoring rate after and approximately when did it change?) 
+
+We're going to need some priors(our inital/prior belief about the parameter before we encounter some data)
+
+
+**Priors for $\lambda_{1}$, $\lambda_{2}$**
+
+- $\lambda_{1} \sim Exp(\alpha) $ 
+- $\lambda_{2} \sim Exp(\alpha) $
+
+Why exponential?
+
+The exponential gives us a distribution over all positive numbers so it could be a good choice to model $\lambda$ but we could have easily used a normal distribution too (which we might try after this example)
+
+The exponential distribution takes it's own parameter called $\alpha$, this is a _hyperparameter_/_Parent Variable_ its a parameter that influences other parameters. 
+
+A good rule of thumb is to set $\alpha$ as as the inverse of the average of the counts. $\frac{1}{averageOfCounts}$
+
+- What about $\tau$:
+
+because of the noise in the data, good games vs bad games etc. It can be hard to choose when $\tau$ might've occured so we set a flat probability amoungst all the games
+
+i.e. $\tau$ $\sim$ DiscreteUniform(1,number of games)
+
+
+There are a lot of moving pieces here, $\lambda$'s, $\tau$'s etc but before we go and start using tools we need to gather our data, below is a simple script to get hardens scoring data
 
 ### Get the data
 
@@ -141,59 +178,117 @@ What I want to model is how James hardens scoring changed over his career. It de
 #imports 
 from nba_api.stats.endpoints import playergamelog #will get us the players box score numbers per game for each season
 from nba_api.stats.static import players #gives us a list of players
-import pandas as pd # <3 
+import pandas as pd  
+import numpy as np 
 ```
 
 ```python
-players_df = pd.DataFrame(players.get_active_players())
-jh_id = players_df[players_df.full_name.str.contains('James Harden')].id.iloc[0]
+# players_df = pd.DataFrame(players.get_active_players())
+# jh_id = players_df[players_df.full_name.str.contains('James Harden')].id.iloc[0]
+
+# seasons = [f'20{x}-{x+1}' for x in range(10,22)]
+# seasons.insert(0, '2009-10')
+
+# dfs = []
+
+# for season in seasons:
+#     dfs.append(playergamelog.PlayerGameLog(str(jh_id), season=season).get_data_frames()[0])
+
+# df = pd.concat(dfs)
+
+# df.to_csv('james_harden.csv', index=False)
 ```
 
 ```python
-seasons = [f'20{x}-{x+1}' for x in range(10,22)]
-seasons.insert(0, '2009-10')
+df = pd.read_csv('james_harden.csv')
 ```
 
 ```python
-dfs = []
-
-for season in seasons:
-    dfs.append(playergamelog.PlayerGameLog(str(jh_id), season=season).get_data_frames()[0])
+#looking at last 5 seasons worth of data 
+points = df[df.SEASON_ID.isin([22017,22018,22019,22020,22021])]['PTS'].reset_index(drop=True)
 ```
 
 ```python
-df = pd.concat(dfs)
-```
+#quick plot to see the distribution over the last 5 years, looks like a normal dist centered 
+#around 27 maybe that would've been a better choice but we can try that after
 
-```python
-df.to_csv('james_harden.csv', index=False)
-```
-
-```python
-df.groupby('SEASON_ID')['PTS'].plot(kind='hist')
+points.plot(kind='hist')
 ```
 
 
 
 
-    SEASON_ID
-    22009    AxesSubplot(0.125,0.125;0.775x0.755)
-    22010    AxesSubplot(0.125,0.125;0.775x0.755)
-    22011    AxesSubplot(0.125,0.125;0.775x0.755)
-    22012    AxesSubplot(0.125,0.125;0.775x0.755)
-    22013    AxesSubplot(0.125,0.125;0.775x0.755)
-    22014    AxesSubplot(0.125,0.125;0.775x0.755)
-    22015    AxesSubplot(0.125,0.125;0.775x0.755)
-    22016    AxesSubplot(0.125,0.125;0.775x0.755)
-    22017    AxesSubplot(0.125,0.125;0.775x0.755)
-    22018    AxesSubplot(0.125,0.125;0.775x0.755)
-    22019    AxesSubplot(0.125,0.125;0.775x0.755)
-    22020    AxesSubplot(0.125,0.125;0.775x0.755)
-    22021    AxesSubplot(0.125,0.125;0.775x0.755)
-    Name: PTS, dtype: object
+    <AxesSubplot:ylabel='Frequency'>
 
 
 
 
 ![png](Bayesian Statistics with Python_files/output_17_1.png)
 
+
+```python
+#the games plotted as bars across time
+points.plot(kind='bar', figsize=(20,6))
+```
+
+
+
+
+    <AxesSubplot:>
+
+
+
+
+![png](Bayesian Statistics with Python_files/output_18_1.png)
+
+
+```python
+import pymc3 as pm
+
+with pm.Model() as model:
+    
+    #whatever we had above in our modelling methodology section we've just translated into
+    #code
+    
+    #priors
+    alpha = 1.0/points.mean()
+    
+    lambda_1 = pm.Exponential("lambda_1", alpha)
+    lambda_2 = pm.Exponential("lambda_2", alpha)
+    
+    tau = pm.DiscreteUniform("tau", lower = 0, upper=305)
+```
+
+We defined the regular $\lambda$ as 
+
+$$ \lambda = \left\{
+                    \begin{array}{11}
+                    \lambda_{1} & t\gt\tau \\
+                    \lambda_{2} & t\geq\tau \\
+                    \end{array}
+             \right. $$
+        
+        
+To illustrate this as code
+
+```python
+points.shape[0]
+```
+
+
+
+
+    306
+
+
+
+```python
+with model:
+    idx = np.arange(points.shape[0])
+    lambda_ = pm.math.switch(tau >= idx, lambda_1, lambda_2) #also a RV!
+```
+
+```python
+with model:
+    observation = pm.Poisson("obs", lambda_, observed=points)
+```
