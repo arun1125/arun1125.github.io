@@ -1,4 +1,4 @@
-# Bayesian Statistics 
+# Bayesian Statistics an introduction with James Harden
 
 
 
@@ -223,7 +223,7 @@ points.plot(kind='hist')
 
 
 
-![png](Bayesian Statistics with Python_files/output_17_1.png)
+![png](/images/BayesianStatsWPython_files/output_17_1.png)
 
 
 ```python
@@ -239,7 +239,7 @@ points.plot(kind='bar', figsize=(20,6))
 
 
 
-![png](Bayesian Statistics with Python_files/output_18_1.png)
+![png](/images/BayesianStatsWPython_files/output_18_1.png)
 
 
 ```python
@@ -272,17 +272,6 @@ $$ \lambda = \left\{
 To illustrate this as code
 
 ```python
-points.shape[0]
-```
-
-
-
-
-    306
-
-
-
-```python
 with model:
     idx = np.arange(points.shape[0])
     lambda_ = pm.math.switch(tau >= idx, lambda_1, lambda_2) #also a RV!
@@ -292,3 +281,95 @@ with model:
 with model:
     observation = pm.Poisson("obs", lambda_, observed=points)
 ```
+
+```python
+with model:
+    step = pm.Metropolis()
+    trace = pm.sample(10000, tune = 5000, step=step, return_inferencedata=False)
+```
+
+    Multiprocess sampling (4 chains in 4 jobs)
+    CompoundStep
+    >Metropolis: [tau]
+    >Metropolis: [lambda_2]
+    >Metropolis: [lambda_1]
+
+
+
+
+<div>
+    <style>
+        /* Turns off some styling */
+        progress {
+            /* gets rid of default border in Firefox and Opera. */
+            border: none;
+            /* Needs to be in here for Safari polyfill so background images work as expected. */
+            background-size: auto;
+        }
+        .progress-bar-interrupted, .progress-bar-interrupted::-webkit-progress-bar {
+            background: #F44336;
+        }
+    </style>
+  <progress value='60000' class='' max='60000' style='width:300px; height:20px; vertical-align: middle;'></progress>
+  100.00% [60000/60000 00:08<00:00 Sampling 4 chains, 0 divergences]
+</div>
+
+
+
+    Sampling 4 chains for 5_000 tune and 10_000 draw iterations (20_000 + 40_000 draws total) took 19 seconds.
+    The rhat statistic is larger than 1.05 for some parameters. This indicates slight problems during sampling.
+    The estimated number of effective samples is smaller than 200 for some parameters.
+
+
+```python
+lambda_1_samples = trace['lambda_1']
+lambda_2_samples = trace['lambda_2']
+tau_samples = trace['tau']
+```
+
+```python
+pd.Series(lambda_1_samples).plot(kind='hist', bins=50, label='Lambda 1', legend=True)
+pd.Series(lambda_2_samples).plot(kind='hist', bins=50, label='Lambda 2', legend=True)
+plt.title('Posterior Distributions of Lambda')
+```
+
+
+
+
+    Text(0.5, 1.0, 'Posterior Distributions of Lambda')
+
+
+
+
+![png](/images/BayesianStatsWPython_files/output_25_1.png)
+
+
+What we have above is the histogram/distribution of values for our posterior. Narrower distributions are more confident. We can also see a _CLEAR_ difference in scoring from around 33.75 to 28! so Harden's scoring did drop off! But when ...?
+
+quick note: The distributions are not exponential looking! Our model learned the posterior to be Gaussian! we should experiment with Gaussian priors to see the effect on the model (but im sure it'll be minimal)
+
+```python
+pd.Series(tau_samples).plot(kind='hist', bins=50, label='Tau', legend=True)
+plt.title('Posterior Distribution of Tau')
+```
+
+
+
+
+    Text(0.5, 1.0, 'Posterior Distribution of Tau')
+
+
+
+
+![png](/images/BayesianStatsWPython_files/output_27_1.png)
+
+
+We can see that changes were likely to have happened around day 140 but other days have change potential too
+
+This could mean a few different things some of which include...
+
+- Hardens scoring rate has changed way more than two times
+- He had stretches of bad games 
+
+
+###### These articles are subject to revision because learning is a journey 
